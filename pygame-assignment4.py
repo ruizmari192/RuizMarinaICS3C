@@ -89,6 +89,28 @@ def handle_player_movement(keys, player, speed, walls):
             while check_collision(player, walls) == True:
                 player.y -= 1  # Undo movement on collision
 
+def fire_bullet(player, bullets):
+    """
+    -------------------------------------------------------
+    Spawns a new bullet starting at the player's current center position.
+    -------------------------------------------------------
+    Parameters:
+       player - the rectangle representing the player (pygame.Rect)
+       bullets - the list where active bullet Rects are stored (list)
+    -------------------------------------------------------
+    """
+    bullet_width = 15
+    bullet_height = 15
+    #reset bullet position to the player's position when fired
+    bullet_x = player.x
+    bullet_y = player.y
+  
+    new_bullet = pygame.Rect(bullet_x, bullet_y, bullet_width, bullet_height)
+    bullets.append(new_bullet)
+    return
+  
+    
+
 
 pygame.init()
 # Set screen resolution
@@ -110,6 +132,10 @@ pygame.display.set_caption("Maze Game")
 player_size = 25
 player = pygame.Rect (30, 30, player_size, player_size)
 speed = 4
+
+#to have a list for the new bullets
+bullets = []
+bullet_speed = 4
 
 # Create the exit
 exit_rect = pygame.Rect(540, 340, 30, 30)
@@ -134,6 +160,10 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and not won:
+                fire_bullet (player, bullets)
+
     # Get the keys being pressed
     keys = pygame.key.get_pressed()
 
@@ -143,6 +173,9 @@ while running:
 
         #to keep the player within the screen bounds
         check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+        for bullet in bullets:
+            bullet.y -= bullet_speed
 
         #check if the player won
         if player.colliderect(exit_rect):
@@ -161,6 +194,10 @@ while running:
 
     # Draw the player
     pygame.draw.rect(screen, RED, player)
+
+    #draw the bullet
+    for bullet in bullets:
+        pygame.draw.rect (screen, BLUE, bullet)
 
     # Display the winning message
     if won:
