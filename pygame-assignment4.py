@@ -15,6 +15,7 @@ def check_collision (player, walls):
     -------------------------------------------------------
     """
     #MAIN function:
+    #
     for wall in walls:
         if player.colliderect(wall):
             return True #a collision happened
