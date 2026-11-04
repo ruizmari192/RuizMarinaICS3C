@@ -1,7 +1,7 @@
 import pygame
 import random
 
-def check_collision (player, walls):
+def check_collision (player, walls): #to make it easier to check collision without printing it everytime
     """
     -------------------------------------------------------
     Checks whether the player collides with any of the maze walls.
@@ -17,11 +17,11 @@ def check_collision (player, walls):
     #MAIN function:
     #
     for wall in walls:
-        if player.colliderect(wall):
+        if player.colliderect(wall): #to see if it collides with the wall
             return True #a collision happened
     return False
 
-def check_bounds(rect_object, max_width, max_height):
+def check_bounds(rect_object, max_width, max_height): #make it easier to be sure that the player is in the screen
     """
         -------------------------------------------------------
         Keeps the player inside the screen
@@ -36,15 +36,15 @@ def check_bounds(rect_object, max_width, max_height):
     """
     #MAIN function
 #horizontal bounds
-    if rect_object.left < 0:
-        rect_object.left = 0
-    if rect_object.right > max_width:
-        rect_object.right = max_width
+    if rect_object.left < 0: #to check if the player.x position is getting so close to the edge that is gonna get out the screen
+        rect_object.left = 0 #to rearrange the rectangle at x=0 (the edge)
+    if rect_object.right > max_width: #check if it's gonna pass the max_width (800)
+        rect_object.right = max_width #to make it impossible to get out the screen
 # Vertical Bounds 
-    if rect_object.top < 0:
-        rect_object.top = 0
-    if rect_object.bottom > max_height:
-        rect_object.bottom = max_height
+    if rect_object.top < 0: #check if the top of the player is getting closer to the top edge
+        rect_object.top = 0 #to stop the player from getting out the screen
+    if rect_object.bottom > max_height: #to check if it collides with the max_height (600)
+        rect_object.bottom = max_height #to set the boundary
 
 def handle_player_movement(keys, player, speed, walls):
     """
@@ -114,8 +114,8 @@ def fire_bullet(player, bullets):
 
 pygame.init()
 # Set screen resolution
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 400  
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 500  
 
 # Set up colours
 WHITE = (255, 255, 255)
@@ -130,8 +130,24 @@ pygame.display.set_caption("Maze Game")
 
 # Set up the player
 player_size = 25
+player_x = 30
+player_y = 30
 player = pygame.Rect (30, 30, player_size, player_size)
 speed = 4
+
+#set up the enemies
+
+enemy_size = 25
+enemy_speed = 1.2
+#enemy 1 (it will appear in the right section of the screen (350-650))
+enemy1_x = random.randint (350, SCREEN_WIDTH - enemy_size)
+enemy1_y = random.randint (50, SCREEN_HEIGHT - enemy_size)
+enemy1 = pygame.Rect (enemy1_x, enemy1_y, enemy_size, enemy_size)
+
+#enemy2 (will appear in the left side of the screen)
+enemy2_x = random.randint(50, SCREEN_WIDTH - enemy_size)
+enemy2_y = random.randint(250, SCREEN_HEIGHT - enemy_size)
+enemy2 = pygame.Rect(enemy2_x, enemy2_y, enemy_size, enemy_size)
 
 #to have a list for the new bullets
 bullets = []
@@ -142,11 +158,22 @@ exit_rect = pygame.Rect(540, 340, 30, 30)
 
 # Create the maze walls
 walls = [
-    pygame.Rect(100, 0, 20, 300),
-    pygame.Rect(200, 100, 20, 300),
+    pygame.Rect(80, 0, 20, 400),
+    pygame.Rect(100, 200, 60, 20),
+    pygame.Rect(40, 100, 60, 20),
+    pygame.Rect(150, 300, 20, 200),
+    pygame.Rect(220, 100, 20, 400),
+    pygame.Rect(140, 140, 100, 20),
+    pygame.Rect(130, 50, 60, 60),
+    pygame.Rect(220, 300, 120, 20),
     pygame.Rect(300, 0, 20, 250),
-    pygame.Rect(400, 100, 20, 300),
-    pygame.Rect(500, 0, 20, 250)
+    pygame.Rect(400, 100, 20, 350),
+    pygame.Rect(300, 200, 70, 20),
+    pygame.Rect(580, 0, 20, 250),
+    pygame.Rect(450, 150, 140, 20),
+    pygame.Rect(360, 80, 170, 20),
+    pygame.Rect(380, 300, 250, 20),
+    pygame.Rect(340,400,260,20)
 ]
 
 # Set up the game
@@ -163,6 +190,29 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and not won:
                 fire_bullet (player, bullets)
+
+        #set the enemies movement logic (towards the player)
+        # enemy one chase logic:
+        if enemy1_x < player_x: #to make the enemy move differently depending on the player
+            enemy1_x += enemy_speed
+        elif enemy1_x > player_x:
+            enemy1_x -= enemy_speed
+            
+        if enemy1_y < player_y:
+            enemy1_y += enemy_speed
+        elif enemy1_y > player_y:
+            enemy1_y -= enemy_speed
+
+        # enemy two logic, same as the enemy one but with its different speed
+        if enemy2_x < player_x:
+            enemy2_x += enemy_speed
+        elif enemy2_x > player_x:
+            enemy2_x -= enemy_speed
+            
+        if enemy2_y < player_y:
+            enemy2_y += enemy_speed
+        elif enemy2_y > player_y:
+            enemy2_y -= enemy_speed
 
     # Get the keys being pressed
     keys = pygame.key.get_pressed()
@@ -198,6 +248,10 @@ while running:
     #draw the bullet
     for bullet in bullets:
         pygame.draw.rect (screen, BLUE, bullet)
+
+    #draw the enemy
+    enemy_rect = pygame.Rect(player.left, player.right, enemy_size, enemy_size)
+    pygame.draw.rect (screen, BLUE, enemy_rect)
 
     # Display the winning message
     if won:
