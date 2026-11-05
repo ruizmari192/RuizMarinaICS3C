@@ -248,7 +248,7 @@ while running:
     #draw the bullet
     for bullet in bullets:
         pygame.draw.rect (screen, BLUE, bullet)
-
+    #
     #draw the enemy
     enemy_rect = pygame.Rect(player.left, player.right, enemy_size, enemy_size)
     pygame.draw.rect (screen, BLUE, enemy_rect)
