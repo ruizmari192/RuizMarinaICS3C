@@ -88,27 +88,6 @@ def handle_player_movement(keys, player, speed, walls):
         if check_collision(player, walls) == True:
             while check_collision(player, walls) == True:
                 player.y -= 1  # Undo movement on collision
-
-def fire_bullet(player, bullets):
-    """
-    -------------------------------------------------------
-    Spawns a new bullet starting at the player's current center position.
-    -------------------------------------------------------
-    Parameters:
-       player - the rectangle representing the player (pygame.Rect)
-       bullets - the list where active bullet Rects are stored (list)
-    -------------------------------------------------------
-    """
-    bullet_width = 15
-    bullet_height = 15
-    #reset bullet position to the player's position when fired
-    bullet_x = player.x
-    bullet_y = player.y
-  
-    new_bullet = pygame.Rect(bullet_x, bullet_y, bullet_width, bullet_height)
-    bullets.append(new_bullet)
-    return
-  
     
 
 
@@ -123,6 +102,22 @@ BLUE = (0, 0, 200)
 RED = (255, 0, 0)
 GREEN = (0, 200, 0)
 BLACK = (0, 0, 0)
+PURPLE = (150, 0, 150) 
+ORANGE = (255, 128, 0)  
+YELLOW = (255, 255, 0)
+
+#for level 2:
+stars = [
+    pygame.Rect(180, 20, 15, 15),
+    pygame.Rect(350, 260, 15, 15),
+    pygame.Rect(640, 100, 15, 15)
+]
+
+star1_active = True
+star2_active = True
+star3_active = True
+
+
 
 # Create the game window
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -138,20 +133,22 @@ speed = 4
 #set up the enemies
 
 enemy_size = 25
-enemy_speed = 1.2
+enemy_speed = 0.8
 #enemy 1 (it will appear in the right section of the screen (350-650))
 enemy1_x = random.randint (350, SCREEN_WIDTH - enemy_size)
-enemy1_y = random.randint (50, SCREEN_HEIGHT - enemy_size)
+enemy1_y = 0
 enemy1 = pygame.Rect (enemy1_x, enemy1_y, enemy_size, enemy_size)
 
 #enemy2 (will appear in the left side of the screen)
 enemy2_x = random.randint(50, SCREEN_WIDTH - enemy_size)
-enemy2_y = random.randint(250, SCREEN_HEIGHT - enemy_size)
+enemy2_y = 0
 enemy2 = pygame.Rect(enemy2_x, enemy2_y, enemy_size, enemy_size)
 
-#to have a list for the new bullets
-bullets = []
-bullet_speed = 4
+#bullets creation
+bullet_x = 0            
+bullet_y = 0            
+bullet_speed = 5        
+bullet_active = False 
 
 # Create the exit
 exit_rect = pygame.Rect(540, 340, 30, 30)
@@ -176,10 +173,20 @@ walls = [
     pygame.Rect(340,400,260,20)
 ]
 
+#gate configuration for level 2
+gate_wall = pygame.Rect (500, 320, 20, 80)
+gate_open = False #to track if the gate is open
+
+current_level = 1 #to establish the levels
+freeze_transition_screen = False #to have a condition for when I freeze the game
+
 # Set up the game
 clock = pygame.time.Clock()
 running = True
 won = False
+lost = False
+
+
 # Main game loop
 while running:
     # Check for events
@@ -188,8 +195,23 @@ while running:
             running = False
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and not won:
-                fire_bullet (player, bullets)
+            if event.key == pygame.K_SPACE and freeze_transition_screen:
+                #to pass to level 2, reset the player and end the waiting window
+                current_level = 2
+                player.x = 30
+                player.y = 30
+                walls.append(gate_wall)
+                freeze_transition_screen = False
+
+    #get the keys being pressed
+    keys = pygame.key.get_pressed ()
+
+    if not won and not lost and not freeze_transition_screen: #to play only if I didnt win
+
+        handle_player_movement(keys, player, speed, walls)
+        player_x = player.x
+        player_y = player.y
+        check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
 
         #set the enemies movement logic (towards the player)
         # enemy one chase logic:
@@ -214,18 +236,56 @@ while running:
         elif enemy2_y > player_y:
             enemy2_y -= enemy_speed
 
-    # Get the keys being pressed
-    keys = pygame.key.get_pressed()
+        enemy1.x = int(enemy1_x)
+        enemy1.y = int(enemy1_y)
+        enemy2.x = int(enemy2_x)
+        enemy2.y = int(enemy2_y)
 
-    if not won:
-        #update player position
-        handle_player_movement(keys, player, speed, walls)
+        #if the player touches either enemy, stop the loop
+        if player.colliderect(enemy1) or player.colliderect(enemy2):
+            print("Game Over! An enemy caught you.")
+            lost = True
 
+        if keys[pygame.K_SPACE]:         
+            if not bullet_active:
+                bullet_x = player_x  
+                bullet_y = player_y
+                bullet_active = True
+
+        if bullet_active:
+            bullet_y -= bullet_speed 
+            bullet_rect = pygame.Rect(bullet_x, bullet_y, 15, 15)
+
+            # Si la bala sale del mapa, desaparece
+            if bullet_x >= SCREEN_WIDTH or bullet_y >= SCREEN_HEIGHT or bullet_y <= 0 or bullet_x <= 0:                      
+                bullet_active = False
+            
+            # Colisión con Enemigo 1 -> Reaparece arriba en X random
+            if bullet_rect.colliderect(enemy1):
+                enemy1_x = random.randint(0, SCREEN_WIDTH - enemy_size)
+                enemy1_y = 0
+                bullet_active = False 
+                
+            # Colisión con Enemigo 2 -> Reaparece arriba en X random
+            if bullet_rect.colliderect(enemy2):
+                enemy2_x = random.randint(0, SCREEN_WIDTH - enemy_size)
+                enemy2_y = 0
+                bullet_active = False 
+
+        if current_level == 2:
+            for star in reversed(stars):
+                if player.colliderect(star):
+                    stars.remove(star) # Safely delete the star from our list
+            if not stars and not gate_open:
+                if gate_wall in walls:
+                    walls.remove(gate_wall)
+                gate_open = True
+                
+
+   
         #to keep the player within the screen bounds
         check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-        for bullet in bullets:
-            bullet.y -= bullet_speed
 
         #check if the player won
         if player.colliderect(exit_rect):
@@ -235,9 +295,14 @@ while running:
   # Draw the background
     screen.fill(WHITE)
 
+
     # Draw the maze walls
     for wall in walls:
         pygame.draw.rect(screen, BLUE, wall)
+        if wall == gate_wall:
+            pygame.draw.rect(screen, BROWN, wall)
+        else:
+            pygame.draw.rect(screen, BLUE, wall)
 
     # Draw the exit
     pygame.draw.rect(screen, GREEN, exit_rect)
@@ -245,13 +310,28 @@ while running:
     # Draw the player
     pygame.draw.rect(screen, RED, player)
 
-    #draw the bullet
-    for bullet in bullets:
-        pygame.draw.rect (screen, BLUE, bullet)
     #
     #draw the enemy
-    enemy_rect = pygame.Rect(player.left, player.right, enemy_size, enemy_size)
-    pygame.draw.rect (screen, BLUE, enemy_rect)
+    pygame.draw.rect(screen, PURPLE, enemy1)
+    pygame.draw.rect(screen, ORANGE, enemy2)
+
+    #draw the text for the level 
+    font_level = pygame.font.SysFont(None, 25)
+    level_text = font_level.render("Level: " + str(current_level), True, BLACK) #to convert the text into image
+    screen.blit(level_text, (20, 20))
+
+    if bullet_active:
+        pygame.draw.rect(screen, YELLOW, (bullet_x, bullet_y, 15, 15))
+
+    if freeze_transition_screen:
+        font = pygame.font.SysFont(None, 40)
+        message = font.render("Level 2: Press SPACE to Play", True, BLACK)
+        pygame.draw.rect(screen, WHITE, (130, 160, 440, 60))
+
+    #draw the stars
+    if current_level == 2:
+        for star in stars:
+            pygame.draw.rect(screen, GOLD, star)
 
     # Display the winning message
     if won:
