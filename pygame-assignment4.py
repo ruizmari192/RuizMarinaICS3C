@@ -92,6 +92,8 @@ def handle_player_movement(keys, player, speed, walls):
 
 
 pygame.init()
+pygame.font.init()
+
 # Set screen resolution
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 500  
@@ -105,6 +107,8 @@ BLACK = (0, 0, 0)
 PURPLE = (150, 0, 150) 
 ORANGE = (255, 128, 0)  
 YELLOW = (255, 255, 0)
+GOLD = (225, 215, 0)
+BROWN = (165, 42, 42)
 
 #for level 2:
 stars = [
@@ -112,11 +116,6 @@ stars = [
     pygame.Rect(350, 260, 15, 15),
     pygame.Rect(640, 100, 15, 15)
 ]
-
-star1_active = True
-star2_active = True
-star3_active = True
-
 
 
 # Create the game window
@@ -129,6 +128,10 @@ player_x = 30
 player_y = 30
 player = pygame.Rect (30, 30, player_size, player_size)
 speed = 4
+
+#set up music 
+pygame.mixer.music.load("atlasaudio-arcade-game-617542.mp3")
+pygame.mixer.music.play(-1)
 
 #set up the enemies
 
@@ -178,13 +181,14 @@ gate_wall = pygame.Rect (500, 320, 20, 80)
 gate_open = False #to track if the gate is open
 
 current_level = 1 #to establish the levels
-freeze_transition_screen = False #to have a condition for when I freeze the game
 
 # Set up the game
 clock = pygame.time.Clock()
 running = True
-won = False
+won1 = False
+won2 = False
 lost = False
+menu_screen = False #to have a condition for when I freeze the game
 
 
 # Main game loop
@@ -194,24 +198,26 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and freeze_transition_screen:
-                #to pass to level 2, reset the player and end the waiting window
-                current_level = 2
-                player.x = 30
-                player.y = 30
-                walls.append(gate_wall)
-                freeze_transition_screen = False
+ #       if event.type == pygame.KEYDOWN:
+  #          if event.key == pygame.K_SPACE and freeze_transition_screen:
+   #             #to pass to level 2, reset the player and end the waiting window
+    #            current_level = 2
+     #           player.x = 30
+      #          player.y = 30
+       #         walls.append(gate_wall)
+       #         freeze_transition_screen = False 
+
 
     #get the keys being pressed
     keys = pygame.key.get_pressed ()
 
-    if not won and not lost and not freeze_transition_screen: #to play only if I didnt win
+    if not won1 and not lost and not menu_screen: #to play only if I didnt win
 
-        handle_player_movement(keys, player, speed, walls)
+        handle_player_movement(keys, player, speed, walls) #call the function to check movement and wall collision
         player_x = player.x
         player_y = player.y
-        check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+        check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT) #call the function to check the boundaries
 
         #set the enemies movement logic (towards the player)
         # enemy one chase logic:
@@ -272,27 +278,37 @@ while running:
                 enemy2_y = 0
                 bullet_active = False 
 
-        if current_level == 2:
-            for star in reversed(stars):
-                if player.colliderect(star):
-                    stars.remove(star) # Safely delete the star from our list
+        if player.colliderect(exit_rect):
+            current_level = 2
+            won1 = True
+            memu_screen = True
+
+    elif current_level == 2 and won1 == True and menu_screen == False:
+        for star in reversed(stars):
+            if player.colliderect(star):
+                stars.remove(star) # Safely delete the star from our list
             if not stars and not gate_open:
                 if gate_wall in walls:
                     walls.remove(gate_wall)
-                gate_open = True
-                
+                    gate_open = True
 
-   
         #to keep the player within the screen bounds
         check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
         #check if the player won
-        if player.colliderect(exit_rect):
-            won = True
+       # if player.colliderect(exit_rect):
+          #  won = True
+
+    #if won1 and current_level == 2 and menu_screen == True:
+      
+
+   
+    
 
 #DRAWING:
   # Draw the background
+    
     screen.fill(WHITE)
 
 
@@ -318,23 +334,23 @@ while running:
     #draw the text for the level 
     font_level = pygame.font.SysFont(None, 25)
     level_text = font_level.render("Level: " + str(current_level), True, BLACK) #to convert the text into image
-    screen.blit(level_text, (20, 20))
+    screen.blit(level_text, (10, 20))
 
     if bullet_active:
         pygame.draw.rect(screen, YELLOW, (bullet_x, bullet_y, 15, 15))
 
-    if freeze_transition_screen:
+    if won1 and current_level == 2 and menu_screen == True:
         font = pygame.font.SysFont(None, 40)
         message = font.render("Level 2: Press SPACE to Play", True, BLACK)
-        pygame.draw.rect(screen, WHITE, (130, 160, 440, 60))
-
+        screen.blit(message, (150, 175))
+    
+    if won1 and current_level == 2 and menu_screen == False: #after menu screen
     #draw the stars
-    if current_level == 2:
         for star in stars:
             pygame.draw.rect(screen, GOLD, star)
 
     # Display the winning message
-    if won:
+    if won2:
         font = pygame.font.SysFont(None, 48)
         message = font.render("YOU WIN!", True, BLACK)
         screen.blit(message, (220, 180))
