@@ -213,90 +213,106 @@ while running:
 
     #get the keys being pressed
     keys = pygame.key.get_pressed ()
+    if not menu_screen: 
+        if not won2 and not lost: #to play only if I didnt win
 
-    if not won1 and not lost and not menu_screen: #to play only if I didnt win
+            handle_player_movement(keys, player, speed, walls) #call the function to check movement and wall collision
+            player_x = player.x
+            player_y = player.y
 
-        handle_player_movement(keys, player, speed, walls) #call the function to check movement and wall collision
-        player_x = player.x
-        player_y = player.y
+            check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT) #call the function to check the boundaries
 
-        check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT) #call the function to check the boundaries
-
-        #set the enemies movement logic (towards the player)
-        # enemy one chase logic:
-        if enemy1_x < player_x: #to make the enemy move differently depending on the player
-            enemy1_x += enemy_speed
-        elif enemy1_x > player_x:
-            enemy1_x -= enemy_speed
+            #set the enemies movement logic (towards the player)
+            # enemy one chase logic:
+            if enemy1_x < player_x: #to make the enemy move differently depending on the player
+                enemy1_x += enemy_speed
+            elif enemy1_x > player_x:
+                enemy1_x -= enemy_speed
             
-        if enemy1_y < player_y:
-            enemy1_y += enemy_speed
-        elif enemy1_y > player_y:
-            enemy1_y -= enemy_speed
+            if enemy1_y < player_y:
+                enemy1_y += enemy_speed
+            elif enemy1_y > player_y:
+                enemy1_y -= enemy_speed
 
-        # enemy two logic, same as the enemy one but with its different speed
-        if enemy2_x < player_x:
-            enemy2_x += enemy_speed
-        elif enemy2_x > player_x:
-            enemy2_x -= enemy_speed
+            # enemy two logic, same as the enemy one but with its different speed
+            if enemy2_x < player_x:
+                enemy2_x += enemy_speed
+            elif enemy2_x > player_x:
+                enemy2_x -= enemy_speed
             
-        if enemy2_y < player_y:
-            enemy2_y += enemy_speed
-        elif enemy2_y > player_y:
-            enemy2_y -= enemy_speed
+            if enemy2_y < player_y:
+                enemy2_y += enemy_speed
+            elif enemy2_y > player_y:
+                enemy2_y -= enemy_speed
 
-        enemy1.x = int(enemy1_x)
-        enemy1.y = int(enemy1_y)
-        enemy2.x = int(enemy2_x)
-        enemy2.y = int(enemy2_y)
+            enemy1.x = int(enemy1_x)
+            enemy1.y = int(enemy1_y)
+            enemy2.x = int(enemy2_x)
+            enemy2.y = int(enemy2_y)
 
-        #if the player touches either enemy, stop the loop
-        if player.colliderect(enemy1) or player.colliderect(enemy2):
-            print("Game Over! An enemy caught you.")
-            lost = True
+            #if the player touches either enemy, stop the loop
+            if player.colliderect(enemy1) or player.colliderect(enemy2):
+                print("Game Over! An enemy caught you.")
+                lost = True
 
-        if keys[pygame.K_SPACE]:         
-            if not bullet_active:
-                bullet_x = player_x  
-                bullet_y = player_y
-                bullet_active = True
+            if keys[pygame.K_SPACE]:         
+                if not bullet_active:
+                    bullet_x = player_x  
+                    bullet_y = player_y
+                    bullet_active = True
 
-        if bullet_active:
-            bullet_y -= bullet_speed 
-            bullet_rect = pygame.Rect(bullet_x, bullet_y, 15, 15)
+            if bullet_active:
+                bullet_y -= bullet_speed 
+                bullet_rect = pygame.Rect(bullet_x, bullet_y, 15, 15)
 
-            # Si la bala sale del mapa, desaparece
-            if bullet_x >= SCREEN_WIDTH or bullet_y >= SCREEN_HEIGHT or bullet_y <= 0 or bullet_x <= 0:                      
-                bullet_active = False
+                # Si la bala sale del mapa, desaparece
+                if bullet_x >= SCREEN_WIDTH or bullet_y >= SCREEN_HEIGHT or bullet_y <= 0 or bullet_x <= 0:                      
+                    bullet_active = False
             
-            # Colisión con Enemigo 1 -> Reaparece arriba en X random
-            if bullet_rect.colliderect(enemy1):
-                enemy1_x = random.randint(0, SCREEN_WIDTH - enemy_size)
-                enemy1_y = 0
-                bullet_active = False 
+                # collision with enemy 1
+                if bullet_rect.colliderect(enemy1):
+                    enemy1_x = random.randint(0, SCREEN_WIDTH - enemy_size)
+                    enemy1_y = 0
+                    bullet_active = False 
                 
-            # Colisión con Enemigo 2 -> Reaparece arriba en X random
-            if bullet_rect.colliderect(enemy2):
-                enemy2_x = random.randint(0, SCREEN_WIDTH - enemy_size)
+                # collision with enemy 2
+                if bullet_rect.colliderect(enemy2):
+                    enemy2_x = random.randint(0, SCREEN_WIDTH - enemy_size)
+                    enemy2_y = 0
+                    bullet_active = False 
+
+            #level 1 exit check
+            if current_level == 1 and player.colliderect(exit_rect):
+                current_level = 2
+                won1 = True
+                menu_screen = True
+                #reset player and enemies for level 2
+                player.x = 30
+                player.y = 30
+                enemy1_x = random.randint(350, SCREEN_WIDTH - enemy_size)
+                enemy1_y = 0
+                enemy2_x = random.randint(50, SCREEN_WIDTH - enemy_size)
                 enemy2_y = 0
-                bullet_active = False 
+                if gate_wall not in walls:
+                    walls.append(gate_wall)
 
-        if player.colliderect(exit_rect):
-            current_level = 2
-            won1 = True
-            memu_screen = True
+            #level 2 star and exit rect
 
-    elif current_level == 2 and won1 == True and menu_screen == False:
-        for star in reversed(stars):
-            if player.colliderect(star):
-                stars.remove(star) # Safely delete the star from our list
-            if not stars and not gate_open:
-                if gate_wall in walls:
-                    walls.remove(gate_wall)
-                    gate_open = True
+            elif not lost and current_level == 2 and won1 == True and menu_screen == False and won2 == False:
+                for star in reversed(stars):
+                    if player.colliderect(star):
+                        stars.remove(star) # Safely delete the star from our list
+                if not stars and not gate_open:
+                    if gate_wall in walls:
+                        walls.remove(gate_wall)
+                        gate_open = True
+                if player.colliderect(exit_rect):
+                    won2 = True
 
-        #to keep the player within the screen bounds
-        check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
+    
+
+    #to keep the player within the screen bounds
+    check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
         #check if the player won
@@ -342,18 +358,30 @@ while running:
     if bullet_active:
         pygame.draw.rect(screen, YELLOW, (bullet_x, bullet_y, 15, 15))
 
-    if won1 == True and current_level == 2 and menu_screen == True:
-        font = pygame.font.SysFont(None, 40)
+    #if won1 == True and current_level == 2 and menu_screen == True:
+     #   font = pygame.font.SysFont(None, 40)
+      #  message = font.render("Level 2: Press SPACE to Play", True, BLACK)
+       # screen.blit(message, (250, 275))
+        #for star in stars:
+#           pygame.draw.rect(screen, GOLD, star)
+        #print("HERE 1")
+    if menu_screen == True:
+        menu_bg = pygame.Surface((450, 120))
+        menu_bg.fill(WHITE)
+        menu_bg.set_alpha(200)
+        screen.blit(menu_bg, (125, 220))
+
+        font = pygame.font.SysFont(None, 36)
         message = font.render("Level 2: Press SPACE to Play", True, BLACK)
-        screen.blit(message, (250, 275))
-        print("HERE 1")
-    
-    if won1 == True and current_level == 2 and menu_screen == False: #after menu screen
-    #draw the stars
+        screen.blit(message, (175, 265))
+
+
+        if keys[pygame.K_SPACE]:
+            menu_screen = False
+
+    if current_level == 2 and won2 == False:
         for star in stars:
-            pygame.draw.rect(screen, GOLD, star)
-        print("HERE 2")
-        
+                    pygame.draw.rect(screen, GOLD, star)
 
     # Display the winning message
     if won2 == True:
