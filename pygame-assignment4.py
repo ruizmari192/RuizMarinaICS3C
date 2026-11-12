@@ -101,7 +101,8 @@ SCREEN_HEIGHT = 500
 # Set up colours
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 200)
-RED = (255, 0, 0)
+PLAYER_COLOR = (64, 47, 174)
+RED = (249, 75, 0)
 GREEN = (0, 200, 0)
 BLACK = (0, 0, 0)
 PURPLE = (150, 0, 150) 
@@ -109,6 +110,8 @@ ORANGE = (255, 128, 0)
 YELLOW = (255, 255, 0)
 GOLD = (225, 215, 0)
 BROWN = (165, 42, 42)
+DARK_GREEN = (34, 139, 34)
+LIGHT_GREEN = (193, 255, 214)
 
 #for level 2:
 stars = [
@@ -309,27 +312,27 @@ while running:
 #DRAWING:
   # Draw the background
     
-    screen.fill(WHITE)
+    screen.fill(LIGHT_GREEN)
 
 
     # Draw the maze walls
     for wall in walls:
-        pygame.draw.rect(screen, BLUE, wall)
+        pygame.draw.rect(screen, DARK_GREEN, wall)
         if wall == gate_wall:
-            pygame.draw.rect(screen, BROWN, wall)
-        else:
             pygame.draw.rect(screen, BLUE, wall)
+        else:
+            pygame.draw.rect(screen, DARK_GREEN, wall)
 
     # Draw the exit
     pygame.draw.rect(screen, GREEN, exit_rect)
 
     # Draw the player
-    pygame.draw.rect(screen, RED, player)
+    pygame.draw.rect(screen, PLAYER_COLOR, player)
 
     #
     #draw the enemy
-    pygame.draw.rect(screen, PURPLE, enemy1)
-    pygame.draw.rect(screen, ORANGE, enemy2)
+    pygame.draw.rect(screen, RED, enemy1)
+    pygame.draw.rect(screen, RED, enemy2)
 
     #draw the text for the level 
     font_level = pygame.font.SysFont(None, 25)
@@ -339,21 +342,25 @@ while running:
     if bullet_active:
         pygame.draw.rect(screen, YELLOW, (bullet_x, bullet_y, 15, 15))
 
-    if won1 and current_level == 2 and menu_screen == True:
+    if won1 == True and current_level == 2 and menu_screen == True:
         font = pygame.font.SysFont(None, 40)
         message = font.render("Level 2: Press SPACE to Play", True, BLACK)
-        screen.blit(message, (150, 175))
+        screen.blit(message, (250, 275))
+        print("HERE 1")
     
-    if won1 and current_level == 2 and menu_screen == False: #after menu screen
+    if won1 == True and current_level == 2 and menu_screen == False: #after menu screen
     #draw the stars
         for star in stars:
             pygame.draw.rect(screen, GOLD, star)
+        print("HERE 2")
+        
 
     # Display the winning message
-    if won2:
+    if won2 == True:
         font = pygame.font.SysFont(None, 48)
         message = font.render("YOU WIN!", True, BLACK)
         screen.blit(message, (220, 180))
+        print("HERE 3")
 
     # Update the display
     pygame.display.flip()
