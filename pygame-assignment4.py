@@ -113,14 +113,6 @@ BROWN = (165, 42, 42)
 DARK_GREEN = (34, 139, 34)
 LIGHT_GREEN = (193, 255, 214)
 
-#for level 2:
-stars = [
-    pygame.Rect(180, 20, 15, 15),
-    pygame.Rect(350, 260, 15, 15),
-    pygame.Rect(640, 100, 15, 15)
-]
-
-
 # Create the game window
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Maze Game")
@@ -129,21 +121,20 @@ pygame.display.set_caption("Maze Game")
 player_size = 25
 player_x = 30
 player_y = 30
-player = pygame.Rect (30, 30, player_size, player_size)
+player = pygame.Rect (30, 30, player_size, player_size) #to create the player's shape for pygame
 speed = 4
 
 #set up music 
 pygame.mixer.music.load("atlasaudio-arcade-game-617542.mp3")
-pygame.mixer.music.play(-1)
+pygame.mixer.music.play(-1) #to display it in a loop so that it doesn't stop when reaches the end
 
 #set up the enemies
-
 enemy_size = 25
 enemy_speed = 0.8
 #enemy 1 (it will appear in the right section of the screen (350-650))
-enemy1_x = random.randint (350, SCREEN_WIDTH - enemy_size)
-enemy1_y = 0
-enemy1 = pygame.Rect (enemy1_x, enemy1_y, enemy_size, enemy_size)
+enemy1_x = random.randint (350, SCREEN_WIDTH - enemy_size) #to create random position x position in the right side
+enemy1_y = 0 #so that it appears in the top of the screen
+enemy1 = pygame.Rect (enemy1_x, enemy1_y, enemy_size, enemy_size) #to create the enemy1 for pygame
 
 #enemy2 (will appear in the left side of the screen)
 enemy2_x = random.randint(50, SCREEN_WIDTH - enemy_size)
@@ -180,8 +171,21 @@ walls = [
 ]
 
 #gate configuration for level 2
-gate_wall = pygame.Rect (500, 320, 20, 80)
+gate_wall = pygame.Rect (580, 320, 20, 80)
 gate_open = False #to track if the gate is open
+
+#stars configuration for level 2:
+stars = [
+    pygame.Rect(180, 20, 15, 15),
+    pygame.Rect(350, 260, 15, 15),
+    pygame.Rect(640, 100, 15, 15)
+]
+
+#power up configuration for level 2
+power_up = pygame.Rect(190, 425, 20, 20)
+powerup_active = False #to track if the power up 
+enemies_hidden = False 
+powerup_start_time = 0
 
 current_level = 1 #to establish the levels
 
@@ -224,37 +228,42 @@ while running:
 
             #set the enemies movement logic (towards the player)
             # enemy one chase logic:
-            if enemy1_x < player_x: #to make the enemy move differently depending on the player
-                enemy1_x += enemy_speed
-            elif enemy1_x > player_x:
-                enemy1_x -= enemy_speed
+            if not enemies_hidden: #to check that the player doesn't have the power up so the enemies still appear
+                if enemy1_x < player_x: #to make the enemy move differently depending on the player
+                    enemy1_x += enemy_speed
+                elif enemy1_x > player_x:
+                    enemy1_x -= enemy_speed
             
-            if enemy1_y < player_y:
-                enemy1_y += enemy_speed
-            elif enemy1_y > player_y:
-                enemy1_y -= enemy_speed
+                if enemy1_y < player_y:
+                    enemy1_y += enemy_speed
+                elif enemy1_y > player_y:
+                    enemy1_y -= enemy_speed
 
-            # enemy two logic, same as the enemy one but with its different speed
-            if enemy2_x < player_x:
-                enemy2_x += enemy_speed
-            elif enemy2_x > player_x:
-                enemy2_x -= enemy_speed
+                # enemy two logic, same as the enemy one but with its different speed
+                if enemy2_x < player_x:
+                    enemy2_x += enemy_speed
+                elif enemy2_x > player_x:
+                    enemy2_x -= enemy_speed
             
-            if enemy2_y < player_y:
-                enemy2_y += enemy_speed
-            elif enemy2_y > player_y:
-                enemy2_y -= enemy_speed
+                if enemy2_y < player_y:
+                    enemy2_y += enemy_speed
+                elif enemy2_y > player_y:
+                    enemy2_y -= enemy_speed
 
-            enemy1.x = int(enemy1_x)
-            enemy1.y = int(enemy1_y)
-            enemy2.x = int(enemy2_x)
-            enemy2.y = int(enemy2_y)
+                enemy1.x = int(enemy1_x)
+                enemy1.y = int(enemy1_y)
+                enemy2.x = int(enemy2_x)
+                enemy2.y = int(enemy2_y)
 
-            #if the player touches either enemy, stop the loop
-            if player.colliderect(enemy1) or player.colliderect(enemy2):
-                print("Game Over! An enemy caught you.")
-                lost = True
-
+                #if the player touches either enemy, stop the loop
+                if player.colliderect(enemy1) or player.colliderect(enemy2):
+                    print("Game Over! An enemy caught you.")
+                    lost = True
+            else:
+                #check if 5 seconds have passed (that's the time the enemies are away)
+                if pygame.time.get_ticks() - powerup_start_time >= 5000:
+                    enemies_hidden = False
+            
             if keys[pygame.K_SPACE]:         
                 if not bullet_active:
                     bullet_x = player_x  
@@ -306,10 +315,51 @@ while running:
                     if gate_wall in walls:
                         walls.remove(gate_wall)
                         gate_open = True
+                
+                if player.colliderect(power_up): #to check if the player has touched the power up
+                    powerup_active = True
+                    enemies_hidden = True
+                    powerup_start_time = pygame.time.get_ticks()
+
                 if player.colliderect(exit_rect):
                     won2 = True
 
-    
+        elif lost:
+            if keys[pygame.K_SPACE]: #reset game to level 1
+                lost = False
+                current_level = 1
+                won1 = False
+                won2 = False
+                menu_screen = False
+                bullet_active = False
+                powerup_active = False
+                enemies_hidden = False
+
+                #reset players position:
+                player.x = 30
+                player.y = 30
+
+                #reset enemies position:
+                enemy1_x = random.randint(350, SCREEN_WIDTH - enemy_size)
+                enemy1_y = 0
+                enemy1.x = enemy1_x
+                enemy1.y = enemy1_y
+
+                enemy2_x = random.randint(50, SCREEN_WIDTH - enemy_size)
+                enemy2_y = 0
+                enemy2.x = enemy2_x
+                enemy2.y = enemy2_y
+
+                #reset level 2 gate and stars:
+                gate_open = False
+                if gate_wall in walls:
+                    walls.remove(gate_wall)
+                stars = [
+                    pygame.Rect(180, 20, 15, 15),
+                    pygame.Rect(350, 260, 15, 15),
+                    pygame.Rect(640, 100, 15, 15)
+                ]
+
 
     #to keep the player within the screen bounds
     check_bounds(player, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -347,8 +397,9 @@ while running:
 
     #
     #draw the enemy
-    pygame.draw.rect(screen, RED, enemy1)
-    pygame.draw.rect(screen, RED, enemy2)
+    if not enemies_hidden:
+        pygame.draw.rect(screen, RED, enemy1)
+        pygame.draw.rect(screen, RED, enemy2)
 
     #draw the text for the level 
     font_level = pygame.font.SysFont(None, 25)
@@ -366,29 +417,58 @@ while running:
 #           pygame.draw.rect(screen, GOLD, star)
         #print("HERE 1")
     if menu_screen == True:
-        menu_bg = pygame.Surface((450, 120))
+        menu_bg = pygame.Surface((350, 200))
         menu_bg.fill(WHITE)
         menu_bg.set_alpha(200)
-        screen.blit(menu_bg, (125, 220))
+        screen.blit(menu_bg, (175, 155)) 
 
         font = pygame.font.SysFont(None, 36)
-        message = font.render("Level 2: Press SPACE to Play", True, BLACK)
-        screen.blit(message, (175, 265))
+        line1 = font.render("Level 2!", True, BLACK) #set the first line of text
+        line1_rect = line1.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)) #to center the first line of text
+
+        line2 = font.render("Press ENTER to Start", True, BLACK) #set the second line of text
+        line2_rect = line2.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20)) #to center it in the square of the menu box
+
+        screen.blit(line1, line1_rect) #to draw it centered
+        screen.blit(line2, line2_rect) #to draw it centered
 
 
         if keys[pygame.K_SPACE]:
             menu_screen = False
 
-    if current_level == 2 and won2 == False:
+    if current_level == 2 and won2 == False and menu_screen == False:
         for star in stars:
                     pygame.draw.rect(screen, GOLD, star)
+        if not powerup_active:
+            pygame.draw.rect(screen, PURPLE, power_up)
 
     # Display the winning message
     if won2 == True:
-        font = pygame.font.SysFont(None, 48)
+        font = pygame.font.SysFont(None, 80)
         message = font.render("YOU WIN!", True, BLACK)
-        screen.blit(message, (220, 180))
+        #screen.blit(message, (220, 180))
+        text_x = (SCREEN_WIDTH - message.get_width()) // 2
+        text_y = (SCREEN_HEIGHT - message.get_height()) // 2
+        screen.blit(message, (text_x, text_y))
         print("HERE 3")
+
+    if lost: #display game over message
+        menu_bg = pygame.Surface((420, 160)) #menu's surface
+        menu_bg.fill(WHITE)
+        menu_bg.set_alpha(200)
+        bg_rect = menu_bg.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)) #to set it so that i can draw it and also center it inside the screen
+        screen.blit(menu_bg, bg_rect) #to position it centered in the screen
+
+        font_big = pygame.font.SysFont(None, 60) #for the text
+        line1 = font_big.render("GAME OVER!", True, RED) #first line of the text
+        line1_rect = line1.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 25)) #to set it so that i can draw it and also center it inside the box
+
+        font_small = pygame.font.SysFont(None, 32)
+        line2 = font_small.render("Press SPACE to Restart", True, BLACK) #second line
+        line2_rect = line2.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 25)) #center it
+
+        screen.blit(line1, line1_rect) #draw both lines
+        screen.blit(line2, line2_rect)
 
     # Update the display
     pygame.display.flip()
